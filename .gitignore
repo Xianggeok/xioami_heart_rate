@@ -1,0 +1,30 @@
+# Build output
+build/
+build-*/
+out/
+*.exe
+*.obj
+*.o
+*.lib
+*.dll
+*.res
+*.pdb
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+CPackConfig.cmake
+CPackSourceConfig.cmake
+CTestTestfile.cmake
+Testing/
+
+# Visual Studio / IDE
+.vs/
+.vscode/
+*.user
+*.suo
+
+# C++/WinRT generated headers (regenerate with Microsoft.Windows.CppWinRT)
+_cppwinrt_headers/
+_cppwinrt_tool/
