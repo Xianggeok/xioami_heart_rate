@@ -403,9 +403,17 @@ GLFWwindow* findModalChildWindow(app::DslWindowManager<ManagedWindow>& windows) 
 }
 
 int main() {
+    // Single instance check via named mutex.
+    HANDLE hSingleInstanceMutex = CreateMutexA(NULL, FALSE, "XiaomiMiBandHeartRate_SingleInstance_v1");
+    if (GetLastError() == ERROR_ALREADY_EXISTS) {
+        MessageBoxA(NULL, "程序已在运行中！", "小米手环心率", MB_OK | MB_ICONINFORMATION);
+        return 0;
+    }
+
     core::platform::repairCurrentWorkingDirectory();
     core::render::initializeRenderBackendLoader();
     if (!glfwInit()) {
+        if (hSingleInstanceMutex) { ReleaseMutex(hSingleInstanceMutex); CloseHandle(hSingleInstanceMutex); }
         return -1;
     }
     TimerResolutionGuard timerResolution;
@@ -463,7 +471,16 @@ int main() {
             return;
         }
         if (state && state->trayAvailable && !state->forceClose) {
-            state->hideToTrayRequested = true;
+            HWND hwnd = glfwGetWin32Window(currentWindow);
+            int result = MessageBoxA(hwnd,
+                "选择操作：\n\n「是」= 最小化到托盘\n「否」= 直接关闭",
+                "小米手环心率",
+                MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON1);
+            if (result == IDYES) {
+                state->hideToTrayRequested = true;
+            } else {
+                state->forceClose = true;
+            }
             glfwSetWindowShouldClose(currentWindow, GLFW_FALSE);
         }
     });
@@ -589,5 +606,6 @@ int main() {
     }
     renderBackend.reset();
     glfwTerminate();
+    if (hSingleInstanceMutex) { ReleaseMutex(hSingleInstanceMutex); CloseHandle(hSingleInstanceMutex); }
     return 0;
 }

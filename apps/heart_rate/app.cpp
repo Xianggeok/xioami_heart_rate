@@ -3,6 +3,7 @@
 #include "assets_embedded.h"
 #include "ble_heart_rate.h"
 #include "heart_rate_http.h"
+#include "core/window/window_backend.h"
 
 #include <algorithm>
 #include <atomic>
@@ -54,6 +55,10 @@ std::vector<int> g_history; // recent BPM readings, newest at the back
 heart_rate::HeartRateMonitor g_monitor;
 heart_rate::HeartRateHttpServer g_httpServer;
 std::string g_httpError;
+
+// Copy URL feedback state
+std::string g_copyFeedback;
+float g_copyFeedbackTimer = 0.0f;
 
 // ---------------------------------------------------------------------------
 // Small helpers
@@ -568,19 +573,50 @@ void composeBottom(eui::Ui& ui, float x, float y, float w, float h, float s) {
         })
         .build();
 
-    // OBS browser source URL (or error).
+    // OBS browser source URL (or error) — right corner with copy button.
     const std::string obsText = g_httpError.empty()
         ? "OBS 浏览器源  http://127.0.0.1:3030"
         : "HTTP 服务失败：" + g_httpError;
-    const float obsX = x + btnW + 14.0f * s;
-    const float obsW = w - btnW - 14.0f * s;
-    label(ui, "bottom.obs", obsX, y, obsW, h,
+
+    // Decrease copy feedback timer.
+    if (g_copyFeedbackTimer > 0.0f) {
+        g_copyFeedbackTimer -= 1.0f / 60.0f;
+        if (g_copyFeedbackTimer <= 0.0f) {
+            g_copyFeedbackTimer = 0.0f;
+            g_copyFeedback.clear();
+        }
+    }
+
+    const float copyBtnW = 70.0f * s;
+    const float gap = 10.0f * s;
+    const float obsLabelW = std::max(0.0f, w - btnW - gap - copyBtnW - gap);
+
+    label(ui, "bottom.obs", x + btnW + gap, y, obsLabelW, h,
           obsText, 13.0f * s, g_httpError.empty() ? kMuted : kAmber);
 
-    if (obsW > 420.0f) {
-        label(ui, "bottom.trayhint", x + w - 320.0f, y, 320.0f, h,
-              "关闭或最小化窗口 → 隐藏到托盘", 12.0f * s, alpha(kMuted, 0.8f),
-              eui::HorizontalAlign::Right);
+    // Copy button (or feedback text)
+    if (!g_copyFeedback.empty()) {
+        label(ui, "bottom.copy.feedback", x + w - copyBtnW - gap, y, copyBtnW, h,
+              g_copyFeedback, 13.0f * s, kGreen, eui::HorizontalAlign::Center);
+    } else {
+        components::button(ui, "bottom.copy")
+            .position(x + w - copyBtnW - gap, y)
+            .size(copyBtnW, h)
+            .text("复制")
+            .icon(0xF0C5)
+            .iconSize(12.0f * s)
+            .fontSize(13.0f * s)
+            .theme(themeTokens(), false)
+            .radius(9.0f)
+            .transition(transition())
+            .disabled(g_httpError.empty() ? false : true)
+            .onClick([] {
+                core::window::setClipboardText("http://127.0.0.1:3030");
+                g_copyFeedback = "已复制";
+                g_copyFeedbackTimer = 2.0f;
+                requestUpdate();
+            })
+            .build();
     }
 }
 
