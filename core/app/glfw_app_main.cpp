@@ -406,7 +406,7 @@ int main() {
     // Single instance check via named mutex.
     HANDLE hSingleInstanceMutex = CreateMutexA(NULL, FALSE, "XiaomiMiBandHeartRate_SingleInstance_v1");
     if (GetLastError() == ERROR_ALREADY_EXISTS) {
-        MessageBoxA(NULL, "程序已在运行中！", "小米手环心率", MB_OK | MB_ICONINFORMATION);
+        MessageBoxW(NULL, L"程序已在运行中！", L"小米手环心率", MB_OK | MB_ICONINFORMATION);
         return 0;
     }
 
@@ -472,9 +472,9 @@ int main() {
         }
         if (state && state->trayAvailable && !state->forceClose) {
             HWND hwnd = glfwGetWin32Window(currentWindow);
-            int result = MessageBoxA(hwnd,
-                "选择操作：\n\n「是」= 最小化到托盘\n「否」= 直接关闭",
-                "小米手环心率",
+            int result = MessageBoxW(hwnd,
+                L"选择操作：\n\n「是」= 最小化到托盘\n「否」= 直接关闭",
+                L"小米手环心率",
                 MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON1);
             if (result == IDYES) {
                 state->hideToTrayRequested = true;
