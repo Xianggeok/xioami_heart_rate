@@ -478,10 +478,11 @@ int main() {
                 MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON1);
             if (result == IDYES) {
                 state->hideToTrayRequested = true;
+                glfwSetWindowShouldClose(currentWindow, GLFW_FALSE);
             } else {
                 state->forceClose = true;
+                // Don't cancel — let glfwWindowShouldClose return true so the window closes.
             }
-            glfwSetWindowShouldClose(currentWindow, GLFW_FALSE);
         }
     });
     glfwSetWindowIconifyCallback(window, [](GLFWwindow* currentWindow, int iconified) {
